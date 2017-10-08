@@ -541,6 +541,316 @@ public class Lsascan_v1_frame implements ActionListener{
     	sysinfo.getinfo();
     }
     
+    private Scansingleipthread scansingleipthread = null;
+    private Scaniprange1thread scaniprange1thread = null; 
+    private Scaniprange2thread scaniprange2thread = null; 
+    private Scanportrangethread scanportrangethread = null;
+    private Scanportsetthread scanportsetthread = null;
+    private Sniffthread sniffthread = null;
+    private Brutethread brutethread = null;
+    
+    class Scansingleipthread extends Thread{  
+        public void run() {  
+          //do something...  
+         scansingleipfun();  
+       }  
+  } 
+    public void scansingleipfun() {
+    	try {
+			
+			Lsaipscan.ipaddress = InetAddress.getByName(singleip.getText().trim());
+			 
+		} catch (UnknownHostException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		Scansingleip scansingleipinstance = new Scansingleip();
+		try {
+			scansingleipinstance.thisscansingleip();
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+    }
+    
+    class Brutethread extends Thread{  
+        public void run() {  
+          //do something...  
+         brutefun();  
+       }  
+  } 
+    
+    public void brutefun() {
+    	Brutebyhydra bh = new Brutebyhydra();
+		String cmdh = Lsascan_v1_frame.brutetext.getText();
+		String bresult = bh.getReturnData("/usr/bin/hydra", cmdh);
+		Lsascan_v1_frame.bruteresult.append(bresult);
+    }
+    
+    
+    class Sniffthread extends Thread{  
+        public void run() {  
+          //do something...  
+         snifffun();  
+       }  
+  } 
+    
+    public void snifffun() {
+    	Sniffhost sh = new Sniffhost();
+    	String cmd = sniffhost.getText();
+    	String rd = sh.getReturnData("/usr/bin/nmap", cmd);
+    	sniffresult.setText(rd);
+    }
+    
+    class Scanportsetthread extends Thread{  
+        public void run() {  
+          //do something...  
+         scanportsetfun();  
+       }  
+  } 
+    
+    public void scanportsetfun() {
+    	 int threadNum;
+         threadNum=Integer.parseInt(TheardNum.getText().trim());
+         String[] portsString = textportlist.getText().split(",");
+         
+         int[] ports = new int[portsString.length];
+         
+         for(int ii=0;ii<portsString.length;ii++)
+             ports[ii] = Integer.parseInt(portsString[ii].trim());
+         
+         Result.append("scanning"+" "+Lsaportscan.hostaddress+"'s port set!"+"\n");
+         ExecutorService threadPool = Executors.newCachedThreadPool();
+         for (int i = 0; i < threadNum; i++) {
+         	 Portset portset = new Portset(ports,threadNum,i);
+          	 threadPool.execute(portset);
+         }
+         
+         threadPool.shutdown();
+         
+         while (true) {
+          	
+             if (threadPool.isTerminated()) {
+                 //System.out.println("OVER!!!!!!!!!!!!!!!");
+                 Result.append("-------------------------Over!!!----------------------\n\n");
+                 stateResult.setText("OVER !");  
+                 break;
+             }
+         
+             try {
+                		Thread.sleep(1000);
+             } catch (InterruptedException e1) {
+         }  
+     }
+ }
+  
+    
+    class Scanportrangethread extends Thread{  
+        public void run() {  
+          //do something...  
+         scanportrangefun();  
+       }  
+  } 
+    public void scanportrangefun() {
+    	int threadNum;
+        threadNum=Integer.parseInt(TheardNum.getText().trim());
+    	int startPort;
+        int endPort;
+        
+        try {
+                 startPort=Integer.parseInt(StartPost.getText());
+                 endPort=Integer.parseInt(EndPost.getText());
+                 
+        } catch (NumberFormatException e1) {
+                errorDLG.setBounds(300, 280, 150, 110);
+                DLGINFO.setText("error port number or thread nums");
+                DLGINFO.setBounds(15, 20, 250, 20);
+                okBTN.setBounds(110, 50, 60, 30);
+                DLGINFO.setVisible(true);
+                return ;
+        }
+        
+        if (( startPort<0)||( endPort>65535)||( startPort> endPort)) {
+                errorDLG.setBounds(300, 280, 150, 110);
+                DLGINFO.setText("error port number");
+                DLGINFO.setBounds(15, 20, 250, 20);
+                okBTN.setBounds(110, 50, 60, 30);
+                DLGINFO.setVisible(true);
+                return ;
+        }
+        
+        if (( threadNum<0)||( threadNum>200)) {
+                errorDLG.setBounds(300, 280, 150, 110);
+                DLGINFO.setText("thread nums must less than 200");
+                DLGINFO.setBounds(15, 20, 250, 20);
+                okBTN.setBounds(110, 50, 60, 30);
+                DLGINFO.setVisible(true);
+                return ;
+        }
+        Result.append("scanning"+" "+Lsaportscan.hostaddress+"'s ports!");
+        Result.append("strat_port: "+ startPort+" end_port:"+ endPort+"\n\n");
+    	 ExecutorService threadPool = Executors.newCachedThreadPool();
+         for (int i=0; i<threadNum; i++) {
+         	 Portrange portrange = new Portrange(startPort,endPort,threadNum,i);
+         	 threadPool.execute(portrange);
+         }
+         
+         threadPool.shutdown();
+         
+         while (true) {
+         	
+             if (threadPool.isTerminated()) {
+                 //System.out.println("OVER!!!!!!!!!!!!!!!");
+                 Result.append("Over!!!\n\n");
+                 stateResult.setText("-------------------------Over!!!-----------------------\n\n");  
+                 break;
+             }
+         
+             try {
+                		Thread.sleep(1000);
+             } catch (InterruptedException e1) {
+         }  
+     }
+    }
+    
+    class Scaniprange1thread extends Thread{  
+        public void run() {  
+          //do something...  
+         scaniprange1fun();  
+       }  
+  } 
+    
+    public void scaniprange1fun() {
+    	int ipthreadnums = Integer.parseInt(ipthreads.getText().trim());
+    	String mstartip,mendip;
+		int ipbegin0,ipbegin1,ipbegin2,ipbegin3;
+		int ipend0,ipend1,ipend2,ipend3;
+		int ipnums = 1;
+		Queue<String> allip = new LinkedList<String>();
+	
+		
+		
+		mstartip = Lsascan_v1_frame.mstartip.getText().trim();
+		mendip = Lsascan_v1_frame.mendip.getText().trim();
+		ipbegin0 = Integer.parseInt(mstartip.split("\\.")[0]);
+		ipbegin1 = Integer.parseInt(mstartip.split("\\.")[1]);
+		ipbegin2 = Integer.parseInt(mstartip.split("\\.")[2]);
+		ipbegin3 = Integer.parseInt(mstartip.split("\\.")[3]);
+		
+		ipend0 = Integer.parseInt(mendip.split("\\.")[0]);
+		ipend1 = Integer.parseInt(mendip.split("\\.")[1]);
+		ipend2 = Integer.parseInt(mendip.split("\\.")[2]);
+		ipend3 = Integer.parseInt(mendip.split("\\.")[3]);
+		
+		allip.offer(mstartip);
+		//System.out.println(mstartip);
+		
+		while(true)
+	    {
+			
+	        if (ipbegin3!=ipend3)
+	        {
+	            ipbegin3 += 1;
+	        }
+	        else if(ipbegin2!=ipend2)
+	        {
+	            ipbegin3 = 0;
+	            ipbegin2 += 1;
+	        }
+	        else if(ipbegin1!=ipend1)
+	        {
+	            ipbegin3 = 0;
+	            ipbegin2 = 0;
+	            ipbegin1 += 1;
+	        }
+	        else if(ipbegin0!=ipend0)
+	        {
+	            ipbegin3 = 0;
+	            ipbegin2 = 0;
+	            ipbegin1 = 0;
+	            ipbegin0 += 1;
+	        }
+	        else
+	        {
+	            //System.out.println("end");  
+	            break;
+	        }
+	        
+	        allip.offer(ipbegin0+"."+ipbegin1+"."+ipbegin2+"."+ipbegin3);
+	        //System.out.println(ipbegin0+"."+ipbegin1+"."+ipbegin2+"."+ipbegin3);
+	        ipnums++;
+	    }
+		
+		iparea.append("-----------------Total ip nums:"+ipnums+"-------------------\n");
+		
+		   Lsaipscan.Scaniprange1.allip = allip;
+		   ExecutorService executor = Executors.newFixedThreadPool(ipthreadnums);
+		   for (int i = 0; i < ipthreadnums; i++) {
+			   Scaniprange1 scaniprange1 = new Scaniprange1();
+	           executor.execute(scaniprange1);
+	        }
+		   executor.shutdown();
+	        try {
+	            while (!executor.isTerminated()) {
+	                Thread.sleep(1000);
+	            }
+	        } catch (Exception e2) {
+	            //e2.printStackTrace();
+	        }
+    }
+    
+    
+    
+    
+    class Scaniprange2thread extends Thread{  
+    	          public void run() {  
+    	            //do something...  
+    	           scaniprange2fun();  
+    	         }  
+            }  
+    
+    public void scaniprange2fun() {
+    	int ipthreadnums = Integer.parseInt(ipthreads.getText().trim());
+    	String striii;
+		//System.out.println(tip2);
+		InetAddress tipordomain2 = null;
+		//System.out.println(ipordomain.getText().trim());
+		try {
+			tipordomain2 = InetAddress.getByName(ipordomain.getText().trim());
+		} catch (UnknownHostException e1) {
+			// TODO Auto-generated catch block
+			//e1.printStackTrace();
+		}
+		String tip2 = tipordomain2.getHostAddress();
+		//System.out.print(tip2);
+		for(int iii=1;iii<=254;iii++) {
+			striii = Integer.toString(iii);
+			Lsaipscan.Scaniprange2.allipp.offer(tip2.split("\\.")[0]+"."+tip2.split("\\.")[1]+"."+tip2.split("\\.")[2]+"."+striii);
+			//System.out.print(tip2.split("\\.")[0]+tip2.split("\\.")[1]+"."+tip2.split("\\.")[2]+striii);
+		}
+		
+		iparea.append("----------------Total ip nums: 254------------------\n");
+		
+		   
+		   ExecutorService executor = Executors.newFixedThreadPool(ipthreadnums);
+		   for (int i = 0; i < ipthreadnums; i++) {
+			   Scaniprange2 scaniprange2 = new Scaniprange2();
+	           executor.execute(scaniprange2);
+	        }
+		   executor.shutdown();
+	        try {
+	            while (!executor.isTerminated()) {
+	                Thread.sleep(1000);
+	            }
+	        } catch (Exception e2) {
+	            //e2.printStackTrace();
+	        }
+	    iparea.append("----------------Over!!!------------------\n");
+	}
+
+    
     
 
 
@@ -575,10 +885,8 @@ public class Lsascan_v1_frame implements ActionListener{
 		}
 		
 		if("brute".equals(command)) {
-			Brutebyhydra bh = new Brutebyhydra();
-			String cmdh = Lsascan_v1_frame.brutetext.getText();
-			String bresult = bh.getReturnData("/usr/bin/hydra", cmdh);
-			Lsascan_v1_frame.bruteresult.append(bresult);
+			brutethread = new Brutethread();  
+   		    brutethread.start(); 
 		}
 		
 		if("get processlist".equals(command)) {
@@ -613,10 +921,8 @@ public class Lsascan_v1_frame implements ActionListener{
 		
 		
 		if("sniff".equals(command)) {
-	        	Sniffhost sh = new Sniffhost();
-	        	String cmd = sniffhost.getText();
-	        	String rd = sh.getReturnData("/usr/bin/nmap", cmd);
-	        	sniffresult.setText(rd);
+			sniffthread = new Sniffthread();  
+   		    sniffthread.start(); 
 	        	
 	        }
 		
@@ -645,8 +951,7 @@ public class Lsascan_v1_frame implements ActionListener{
         if ("Start".equals(command)) {
         		
                 Result.setText(null);
-                int threadNum;
-                threadNum=Integer.parseInt(TheardNum.getText().trim());
+               
 
                 try {
                         Lsaportscan.hostaddress=InetAddress.getByName(this.IPName.getText());
@@ -661,98 +966,15 @@ public class Lsascan_v1_frame implements ActionListener{
                 
                 
                 if(scanrange.isSelected()) {
-                	int startPort;
-                    int endPort;
-                    
-                    try {
-                             startPort=Integer.parseInt(StartPost.getText());
-                             endPort=Integer.parseInt(EndPost.getText());
-                             
-                    } catch (NumberFormatException e1) {
-                            errorDLG.setBounds(300, 280, 150, 110);
-                            DLGINFO.setText("error port number or thread nums");
-                            DLGINFO.setBounds(15, 20, 250, 20);
-                            okBTN.setBounds(110, 50, 60, 30);
-                            DLGINFO.setVisible(true);
-                            return ;
-                    }
-                    
-                    if (( startPort<0)||( endPort>65535)||( startPort> endPort)) {
-                            errorDLG.setBounds(300, 280, 150, 110);
-                            DLGINFO.setText("error port number");
-                            DLGINFO.setBounds(15, 20, 250, 20);
-                            okBTN.setBounds(110, 50, 60, 30);
-                            DLGINFO.setVisible(true);
-                            return ;
-                    }
-                    
-                    if (( threadNum<0)||( threadNum>200)) {
-                            errorDLG.setBounds(300, 280, 150, 110);
-                            DLGINFO.setText("thread nums must less than 200");
-                            DLGINFO.setBounds(15, 20, 250, 20);
-                            okBTN.setBounds(110, 50, 60, 30);
-                            DLGINFO.setVisible(true);
-                            return ;
-                    }
-                    Result.append("scanning"+" "+Lsaportscan.hostaddress+"'s ports!");
-                    Result.append("strat_port: "+ startPort+" end_port:"+ endPort+"\n\n");
-                	 ExecutorService threadPool = Executors.newCachedThreadPool();
-                     for (int i=0; i<threadNum; i++) {
-                     	 Portrange portrange = new Portrange(startPort,endPort,threadNum,i);
-                     	 threadPool.execute(portrange);
-                     }
-                     
-                     threadPool.shutdown();
-                     
-                     while (true) {
-                     	
-                         if (threadPool.isTerminated()) {
-                             //System.out.println("OVER!!!!!!!!!!!!!!!");
-                             Result.append("Over!!!\n\n");
-                             stateResult.setText("-------------------------Over!!!-----------------------\n\n");  
-                             break;
-                         }
-                     
-                         try {
-                            		Thread.sleep(1000);
-                         } catch (InterruptedException e1) {
-                     }  
-                 }
+                	 scanportrangethread = new Scanportrangethread();  
+            		 scanportrangethread.start(); 
                 }
                 
                 else if(scanset.isSelected()) {
+                	scanportsetthread = new Scanportsetthread();  
+           		    scanportsetthread.start(); 
                 	
-                	String[] portsString = textportlist.getText().split(",");
-                    
-                    int[] ports = new int[portsString.length];
-                    
-                    for(int ii=0;ii<portsString.length;ii++)
-                        ports[ii] = Integer.parseInt(portsString[ii].trim());
-                    
-                    Result.append("scanning"+" "+Lsaportscan.hostaddress+"'s port set!"+"\n");
-                    ExecutorService threadPool = Executors.newCachedThreadPool();
-                    for (int i = 0; i < threadNum; i++) {
-                    	 Portset portset = new Portset(ports,threadNum,i);
-                     	 threadPool.execute(portset);
-                    }
-                    
-                    threadPool.shutdown();
-                    
-                    while (true) {
-                     	
-                        if (threadPool.isTerminated()) {
-                            //System.out.println("OVER!!!!!!!!!!!!!!!");
-                            Result.append("-------------------------Over!!!----------------------\n\n");
-                            stateResult.setText("OVER !");  
-                            break;
-                        }
-                    
-                        try {
-                           		Thread.sleep(1000);
-                        } catch (InterruptedException e1) {
-                    }  
-                }
-            }
+        }
         }
         
         else if("SCANIP".equals(command)) {
@@ -761,145 +983,22 @@ public class Lsascan_v1_frame implements ActionListener{
 //        		getmac = 1;
 //        	}
         	iparea.setText(null);
-        	int ipthreadnums = Integer.parseInt(ipthreads.getText().trim());
+        	
         	
         	if(scansingleip.isSelected()) {
-        		
-        		try {
-        			
-        			Lsaipscan.ipaddress = InetAddress.getByName(singleip.getText().trim());
-    				 
-    			} catch (UnknownHostException e1) {
-    				// TODO Auto-generated catch block
-    				e1.printStackTrace();
-    			}
-        		
-        		Scansingleip scansingleipinstance = new Scansingleip();
-        		try {
-					scansingleipinstance.thisscansingleip();
-				} catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+        		scansingleipthread = new Scansingleipthread();  
+       		    scansingleipthread.start(); 
         		
         	}
         	if(scaniprange1.isSelected()) {
-        		String mstartip,mendip;
-        		int ipbegin0,ipbegin1,ipbegin2,ipbegin3;
-        		int ipend0,ipend1,ipend2,ipend3;
-        		int ipnums = 1;
-        		Queue<String> allip = new LinkedList<String>();
-        	
-        		
-        		
-        		mstartip = Lsascan_v1_frame.mstartip.getText().trim();
-    			mendip = Lsascan_v1_frame.mendip.getText().trim();
-    			ipbegin0 = Integer.parseInt(mstartip.split("\\.")[0]);
-    			ipbegin1 = Integer.parseInt(mstartip.split("\\.")[1]);
-    			ipbegin2 = Integer.parseInt(mstartip.split("\\.")[2]);
-    			ipbegin3 = Integer.parseInt(mstartip.split("\\.")[3]);
-    			
-    			ipend0 = Integer.parseInt(mendip.split("\\.")[0]);
-    			ipend1 = Integer.parseInt(mendip.split("\\.")[1]);
-    			ipend2 = Integer.parseInt(mendip.split("\\.")[2]);
-    			ipend3 = Integer.parseInt(mendip.split("\\.")[3]);
-    			
-    			allip.offer(mstartip);
-    			//System.out.println(mstartip);
-    			
-    			while(true)
-    		    {
-    				
-    		        if (ipbegin3!=ipend3)
-    		        {
-    		            ipbegin3 += 1;
-    		        }
-    		        else if(ipbegin2!=ipend2)
-    		        {
-    		            ipbegin3 = 0;
-    		            ipbegin2 += 1;
-    		        }
-    		        else if(ipbegin1!=ipend1)
-    		        {
-    		            ipbegin3 = 0;
-    		            ipbegin2 = 0;
-    		            ipbegin1 += 1;
-    		        }
-    		        else if(ipbegin0!=ipend0)
-    		        {
-    		            ipbegin3 = 0;
-    		            ipbegin2 = 0;
-    		            ipbegin1 = 0;
-    		            ipbegin0 += 1;
-    		        }
-    		        else
-    		        {
-    		            //System.out.println("end");  
-    		            break;
-    		        }
-    		        
-    		        allip.offer(ipbegin0+"."+ipbegin1+"."+ipbegin2+"."+ipbegin3);
-    		        //System.out.println(ipbegin0+"."+ipbegin1+"."+ipbegin2+"."+ipbegin3);
-    		        ipnums++;
-    		    }
-    			
-    			iparea.append("-----------------Total ip nums:"+ipnums+"-------------------\n");
-    			
-        		   Lsaipscan.Scaniprange1.allip = allip;
-        		   ExecutorService executor = Executors.newFixedThreadPool(ipthreadnums);
-        		   for (int i = 0; i < ipthreadnums; i++) {
-        			   Scaniprange1 scaniprange1 = new Scaniprange1();
-        	           executor.execute(scaniprange1);
-        	        }
-        		   executor.shutdown();
-        	        try {
-        	            while (!executor.isTerminated()) {
-        	                Thread.sleep(1000);
-        	            }
-        	        } catch (Exception e2) {
-        	            //e2.printStackTrace();
-        	        }
+        		scaniprange1thread = new Scaniprange1thread();  
+       		    scaniprange1thread.start();  
         	        
         	}
         	
         	if(scaniprange2.isSelected()) {
-        			String striii;
-        			//System.out.println(tip2);
-        			InetAddress tipordomain2 = null;
-        			//System.out.println(ipordomain.getText().trim());
-					try {
-						tipordomain2 = InetAddress.getByName(ipordomain.getText().trim());
-					} catch (UnknownHostException e1) {
-						// TODO Auto-generated catch block
-						//e1.printStackTrace();
-					}
-        			String tip2 = tipordomain2.getHostAddress();
-        			//System.out.print(tip2);
-        			for(int iii=1;iii<=254;iii++) {
-        				striii = Integer.toString(iii);
-        				Lsaipscan.Scaniprange2.allipp.offer(tip2.split("\\.")[0]+"."+tip2.split("\\.")[1]+"."+tip2.split("\\.")[2]+"."+striii);
-        				//System.out.print(tip2.split("\\.")[0]+tip2.split("\\.")[1]+"."+tip2.split("\\.")[2]+striii);
-        			}
-        			
-        			iparea.append("----------------Total ip nums: 254------------------\n");
-        			
-         		   
-         		   ExecutorService executor = Executors.newFixedThreadPool(ipthreadnums);
-         		   for (int i = 0; i < ipthreadnums; i++) {
-         			   Scaniprange2 scaniprange2 = new Scaniprange2();
-         	           executor.execute(scaniprange2);
-         	        }
-         		   executor.shutdown();
-         	        try {
-         	            while (!executor.isTerminated()) {
-         	                Thread.sleep(1000);
-         	            }
-         	        } catch (Exception e2) {
-         	            //e2.printStackTrace();
-         	        }
-        			
-        		}
-
+        		 scaniprange2thread = new Scaniprange2thread();  
+        		 scaniprange2thread.start();  
         }
         
         
@@ -909,6 +1008,8 @@ public class Lsascan_v1_frame implements ActionListener{
                 System.exit(1);
         }
 }
-}
+	}
+	}
+
 	
 

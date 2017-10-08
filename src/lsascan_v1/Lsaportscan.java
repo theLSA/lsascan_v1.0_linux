@@ -64,7 +64,7 @@ public class Lsaportscan{
 	public static class Portset implements Runnable {
 	
         public int[] ports; 
-        public int threadNum, i, timeout; 
+        public int threadNum, i; 
         
         public Portset(int[] ports, int threadNum, int i) {
             this.ports = ports;

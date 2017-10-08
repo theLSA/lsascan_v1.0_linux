@@ -29,7 +29,7 @@ public class Getmac {
 		  
 			    String pingresult = command("ping "+ip+" -c 2");
 			    //System.out.println(pingresult);
-		        String result = command("arp -a "+ip);
+		        String result = command("/usr/sbin/arp -a "+ip);
 		   
 		        String regExp = "([0-9A-Fa-f]{2})([-:][0-9A-Fa-f]{2}){5}";
 		        Pattern pattern = Pattern.compile(regExp);
